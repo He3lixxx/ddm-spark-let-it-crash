@@ -28,6 +28,7 @@ object SimpleSpark extends App {
     //------------------------------------------------------------------------------------------------------------------
     // Lamda basics (for Scala)
     //------------------------------------------------------------------------------------------------------------------
+    /*
 
     //spark uses user defined functions to transform data, lets first look at how functions are defined in scala:
     val smallListOfNumbers = List(1, 2, 3, 4, 5)
@@ -52,7 +53,7 @@ object SimpleSpark extends App {
     println(smallListOfNumbers.map(squareAndAddFunction))
     println(smallListOfNumbers.map(i => i * 2 + 0.5)) // anonymous function; compiler can infers types
     println(smallListOfNumbers.map(_ * 2 + 0.5)) // syntactic sugar: '_' maps to first (second, third, ...) parameter
-
+    */
     //------------------------------------------------------------------------------------------------------------------
     // Setting up a Spark Session
     //------------------------------------------------------------------------------------------------------------------
@@ -72,6 +73,7 @@ object SimpleSpark extends App {
 
     println("---------------------------------------------------------------------------------------------------------")
 
+    /*
     //------------------------------------------------------------------------------------------------------------------
     // Loading data
     //------------------------------------------------------------------------------------------------------------------
@@ -359,6 +361,7 @@ object SimpleSpark extends App {
     // Longest Common Substring Search
     //------------------------------------------------------------------------------------------------------------------
 
+    */
     def time[R](block: => R): R = {
       val t0 = System.currentTimeMillis()
       val result = block
@@ -367,6 +370,7 @@ object SimpleSpark extends App {
       result
     }
 
+    /*
     def longestCommonSubstring(str1: String, str2: String): String = {
       if (str1.isEmpty || str2.isEmpty)
         return ""
@@ -431,6 +435,7 @@ object SimpleSpark extends App {
         .show(200)
     }
 
+    */
     //------------------------------------------------------------------------------------------------------------------
     // Inclusion Dependency Discovery (Homework)
     //------------------------------------------------------------------------------------------------------------------
@@ -438,6 +443,6 @@ object SimpleSpark extends App {
     val inputs = List("region", "nation", "supplier", "customer", "part", "lineitem", "orders")
       .map(name => s"data/TPCH/tpch_$name.csv")
 
-    //time {Sindy.discoverINDs(inputs, spark)}
+    time {Sindy.discoverINDs(inputs, spark)}
   }
 }
