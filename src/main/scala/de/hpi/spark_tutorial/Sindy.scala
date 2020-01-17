@@ -41,7 +41,9 @@ class IntersectionAggregation() extends UserDefinedAggregateFunction {
       val input_list = input.getList[String](0).asScala
       val input_set = Set(input_list: _*)
 
-      buffer(0) = current_set intersect input_set
+      val result_set = current_set intersect input_set
+
+      buffer(0) = result_set.toList
     }
   }
 
@@ -57,6 +59,8 @@ class IntersectionAggregation() extends UserDefinedAggregateFunction {
 
 object Sindy {
   def discoverINDs(inputs: List[String], spark: SparkSession): Unit = {
+    // TODO: Test out how this performs if instead of converting between lists and sets all the time, we just use lists
+    //  (in c++, small vectors will be faster than sets due to smaller overhead)
     val reader = spark
       .read
       .option("header", "true")
@@ -82,8 +86,6 @@ object Sindy {
     // attribute sets as in the Sindy paper
     val distinct_attribute_sets = columns_per_distinct_value.select("collect_set(column)").distinct()
 
-    distinct_attribute_sets.show
-
     val inclusion_lists = distinct_attribute_sets.flatMap( row => {
       // Todo: Is this already a set?
       val list: Seq[String] = row(0).asInstanceOf[Seq[String]]
@@ -95,16 +97,15 @@ object Sindy {
       })
     })
 
-
-    inclusion_lists.show
-
     val intersection_aggregator = new IntersectionAggregation()
 
     val inclusion_dependencies = inclusion_lists
       .groupBy("column")
-      .agg(intersection_aggregator(inclusion_lists.col("includedInColumns")) )
+      .agg(intersection_aggregator(inclusion_lists.col("includedInColumns")).as("includedIn"))
 
-    inclusion_dependencies.show
+    val flattened_inds = inclusion_dependencies.withColumn("column", explode($"includedIn"))
+
+    flattened_inds.show
 
     // TODO
   }
