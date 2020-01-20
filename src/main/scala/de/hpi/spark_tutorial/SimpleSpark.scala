@@ -9,11 +9,29 @@ object SimpleSpark extends App {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
+    //add the command line arguments
+    var path_input = "./TPCH"
+    var cores_input = "4"
+
+    var prev = ""
+    args.foreach(arg => {
+      if(prev == "--path"){
+        path_input = arg
+      }
+      if(prev == "--cores"){
+        cores_input = arg
+      }
+      prev = arg
+    })
+
+    println(path_input, cores_input)
+    println(s"local[$cores_input]")
+
     // Create a SparkSession to work with Spark
     val sparkBuilder = SparkSession
       .builder()
       .appName("SparkTutorial")
-      .master("local[4]") // local, with 4 worker cores
+      .master(s"local[$cores_input]") // local, with $cores_input many worker cores
     val spark = sparkBuilder.getOrCreate()
 
     // Set the default number of shuffle partitions (default is 200, which is too high for local deployment)
@@ -30,7 +48,10 @@ object SimpleSpark extends App {
     }
 
     val inputs = List("region", "nation", "supplier", "customer", "part", "lineitem", "orders")
-      .map(name => s"data/TPCH/tpch_$name.csv")
+      .map(name => s"$path_input/tpch_$name.csv")
+
+    //val inputs = List("nation", "supplier")
+      //.map(name => path_input+s"/tpch_$name.csv")
 
     time {Sindy.discoverINDs(inputs, spark)}
   }
