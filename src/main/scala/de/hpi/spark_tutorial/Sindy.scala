@@ -35,12 +35,8 @@ class IntersectionAggregation() extends UserDefinedAggregateFunction {
       buffer(0) = input(0)
       buffer(1) = false
     } else {
-      val current_list = buffer.getList[String](0).asScala
-      val current_set = Set[String](current_list: _*)
-
-      val input_list = input.getList[String](0).asScala
-      val input_set = Set(input_list: _*)
-
+      val current_set = buffer.getList[String](0).asScala.toSet
+      val input_set = input.getList[String](0).asScala.toSet
       val result_set = current_set intersect input_set
 
       buffer(0) = result_set.toList
@@ -54,14 +50,10 @@ class IntersectionAggregation() extends UserDefinedAggregateFunction {
   def evaluate(buffer: Row) = {
     buffer.getList[String](0)
   }
-
 }
 
 object Sindy {
   def discoverINDs(inputs: List[String], spark: SparkSession): Unit = {
-    // TODO: How many partitions does this generate? Do we have enough for 32 cores?
-    // TODO: Test out how this performs if instead of converting between lists and sets all the time, we just use lists
-    //  (in c++, small vectors will be faster than sets due to smaller overhead)
     val reader = spark
       .read
       .option("header", "true")
@@ -72,8 +64,7 @@ object Sindy {
     val values_to_columns_df = inputs.flatMap( file => {
       val df = reader.csv(file)
       df.columns.map( column => {
-        // TODO: Can we remove the toString here? Theoretically, with inferSchema off, all value should be String
-        df.select(column).map( value => ValueColumnPair(value(0).toString, column) )
+        df.select(column).map( row => ValueColumnPair(row.getString(0), column) )
       })
     })
 
@@ -88,7 +79,6 @@ object Sindy {
     val distinct_attribute_sets = columns_per_distinct_value.select("collect_set(column)").distinct()
 
     val inclusion_lists = distinct_attribute_sets.flatMap( row => {
-      // Todo: Is this already a set?
       val list: Seq[String] = row(0).asInstanceOf[Seq[String]]
       val set = list.toSet
 
