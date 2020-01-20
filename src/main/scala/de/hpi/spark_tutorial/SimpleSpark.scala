@@ -24,14 +24,14 @@ object SimpleSpark extends App {
       prev = arg
     })
 
-    println(path_input, cores_input)
-    println(s"local[$cores_input]")
+    //println(path_input, cores_input)
+    //println(s"local[$cores_input]")
 
     // Create a SparkSession to work with Spark
     val sparkBuilder = SparkSession
       .builder()
       .appName("SparkTutorial")
-      .master(s"local[$cores_input]") // local, with $cores_input many worker cores
+      .master(s"local[$cores_input]") // local, with $cores_input many worker cores TODO: dsnt work yet (on my machine)
     val spark = sparkBuilder.getOrCreate()
 
     // Set the default number of shuffle partitions (default is 200, which is too high for local deployment)
@@ -49,9 +49,6 @@ object SimpleSpark extends App {
 
     val inputs = List("region", "nation", "supplier", "customer", "part", "lineitem", "orders")
       .map(name => s"$path_input/tpch_$name.csv")
-
-    //val inputs = List("nation", "supplier")
-      //.map(name => path_input+s"/tpch_$name.csv")
 
     time {Sindy.discoverINDs(inputs, spark)}
   }
