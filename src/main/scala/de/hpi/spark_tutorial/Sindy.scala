@@ -59,6 +59,7 @@ class IntersectionAggregation() extends UserDefinedAggregateFunction {
 
 object Sindy {
   def discoverINDs(inputs: List[String], spark: SparkSession): Unit = {
+    // TODO: How many partitions does this generate? Do we have enough for 32 cores?
     // TODO: Test out how this performs if instead of converting between lists and sets all the time, we just use lists
     //  (in c++, small vectors will be faster than sets due to smaller overhead)
     val reader = spark
@@ -103,10 +104,15 @@ object Sindy {
       .groupBy("column")
       .agg(intersection_aggregator(inclusion_lists.col("includedInColumns")).as("includedIn"))
 
-    val flattened_inds = inclusion_dependencies.withColumn("column", explode($"includedIn"))
+    val sorted_inds = inclusion_dependencies
+      .filter( row => !row.getList[String](1).isEmpty )
+      .sort("column")
 
-    flattened_inds.show
-
-    // TODO
+    sorted_inds
+      .collect
+      .foreach( row => {
+        println(row.getString(0) + " < " + String.join(", ", row.getList[String](1)))
+      })
   }
 }
+
